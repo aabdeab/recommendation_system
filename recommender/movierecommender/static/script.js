@@ -1,10 +1,10 @@
 $(document).ready(function() {
     var csrftoken = Cookies.get('csrftoken');
-    var movieContainer = $('.row.justify-content-center'); // Reference to the movie container
+    var movieContainer = $('.row.justify-content-center'); // Référence au conteneur des films
 
-    // Fonction définie en dehors des gestionnaires d'événements
+    // Fonction pour mettre à jour les cartes de films
     function updateMovieCards(movies) {
-        movieContainer.empty(); // Vider le container avant d'ajouter les nouveaux films
+        movieContainer.empty(); // Vider le conteneur avant d'ajouter les nouveaux films
         movies.forEach(movie => {
             movieContainer.append(`
                 <div id="${movie.id}" class="col-md-4 d-flex justify-content-center mb-1">
@@ -22,50 +22,26 @@ $(document).ready(function() {
             `);
         });
 
-        // Attach click event to dynamically added buttons
+        // Attacher un événement au bouton "Watch"
         $(".btn.btn-outline-success.btn-sm").off().on('click', function() {
             $(this).attr('disabled', 'true').text("Watched");
         });
     }
 
-    // GET request to load the initial context (movies)
-    $.ajax({
-        url: "",  // Assurez-vous que l'URL est correcte ici
-        type: "GET",
-        dataType: "json",
-        success: function(context) {
-            updateMovieCards((context.movie_list).slice(0,30));
-
-            // Input change event handler
-            $('#floatingInputGroup2').on('change', function() {
-                let searchTerm = $('#floatingInputGroup2').val().trim();
-                let filteredMovies1 = (context.movie_list).filter(movie => movie.original_title.includes(searchTerm));
-                let filteredMovies = filteredMovies1.slice(0, 100);
-                console.log(filteredMovies);
-                updateMovieCards(filteredMovies);
-            });
-            $('.class="btn btn-outline-success btn-sm').on('click',function(e){
-                const id = $(e.target).attr('data-id');
-                $.ajax({
-                    url :"",
-                    data : id,
-                    dataType:'json',
-                    success : function(data){
-                        console.log(data);
-                    }
-                })
-
-                
-                
-                
-            })
-
-        
-
-        },
-        error: function(xhr, status, error) {
-            console.error(error);
-        }
+    // GET request pour récupérer les films filtrés
+    $('#floatingInputGroup2').on('input', function() {
+        let searchTerm = $(this).val().trim(); // Obtenir la valeur du champ
+        $.ajax({
+            url: "{% url 'movie_recommendation_view' %}",  // URL de ta vue
+            type: "GET",
+            data: { search: searchTerm },  // Envoyer le terme de recherche
+            dataType: "json",
+            success: function(context) {
+                updateMovieCards(context.movie_list); // Mettre à jour les films
+            },
+            error: function(xhr, status, error) {
+                console.error(error);
+            }
+        });
     });
-    
 });

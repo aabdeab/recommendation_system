@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
     {% load static %}
 
     <title>Movie Recommendations</title>
@@ -22,6 +24,21 @@
             background-position: center;
             background-repeat: no-repeat;
             background-image: url("{% static 'images/bg.jpg' %}");
+        }
+        .card {
+            transition: transform 0.3s;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #f5f5f5;
+        }
+        .card:hover {
+            transform: scale(1.02);
+        }
+        .genre-badge {
+            margin-right: 3px;
+            font-size: 0.8rem;
+        }
+        .rating-stars {
+            color: gold;
         }
     </style>
 
@@ -54,37 +71,89 @@
 
     <!-- Main Container -->
     <div class="container my-5">
-        <h1 class="text-center mb-4 text-warning display-4 font-weight-bold text-uppercase">Watch your favorite movie
-        </h1>
-        <div class="input-group has-validation">
-            {% csrf_token %}
-            <div class="form-floating is-invalid">
-                <input type="search" class="form-control is-invalid" id="floatingInputGroup2" placeholder="Search for a movie" required>
-                <label for="floatingInputGroup2">Select a movie</label>
-            </div>            
-            <div class="invalid-feedback">
-                Please choose a movie.
+        <h1 class="text-center mb-4 text-warning display-4 font-weight-bold text-uppercase">Watch your favorite movie</h1>
+        
+        <!-- Search and Filter Bar -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="input-group">
+                    {% csrf_token %}
+                    <div class="form-floating">
+                        <input type="search" class="form-control" id="floatingInputGroup2" placeholder="Search for a movie" required>
+                        <label for="floatingInputGroup2">Search for a movie</label>
+                    </div>
+                    <button class="btn btn-warning" id="search-btn">Search</button>
+                </div>
+                <div class="invalid-feedback">
+                    Please choose a movie.
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" id="sort-options">
+                    <option value="popularity">Sort by Popularity</option>
+                    <option value="rating">Sort by Rating</option>
+                    <option value="release">Sort by Release Date</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Genre Filter -->
+        <div class="mb-4 p-2 bg-dark rounded">
+            <h5 class="text-light mb-2">Filter by Genre:</h5>
+            <div id="genre-filters">
+                <button class="btn btn-sm btn-outline-light me-1 mb-1" data-genre="action">Action</button>
+                <button class="btn btn-sm btn-outline-light me-1 mb-1" data-genre="adventure">Adventure</button>
+                <button class="btn btn-sm btn-outline-light me-1 mb-1" data-genre="comedy">Comedy</button>
+                <button class="btn btn-sm btn-outline-light me-1 mb-1" data-genre="drama">Drama</button>
+                <button class="btn btn-sm btn-outline-light me-1 mb-1" data-genre="horror">Horror</button>
+                <button class="btn btn-sm btn-outline-light me-1 mb-1" data-genre="sci-fi">Sci-Fi</button>
+                <button class="btn btn-sm btn-warning me-1 mb-1" id="clear-filters">Clear Filters</button>
             </div>
         </div>
 
         <!-- Movie Cards -->
         <div class="container">
-            <div class="row justify-content-center ">
+            <div class="row justify-content-center">
                 {% for movie in movie_list %}
-                <div id="{{movie.id}}" class="col-md-4 d-flex justify-content-center mb-1 ">
+                <div id="{{movie.id}}" class="col-md-4 d-flex justify-content-center mb-4">
                     <div class="card" style="width: 33vw; min-height: 400px;">
                         <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}"
                             class="card-img-top">
                         <div class="card-body">
                             <h5 class="card-title">{{ movie.original_title }}</h5>
-                            <p class="card-text" style="max-height: 300px; overflow-y:scroll;font-size: 1rem;">{{
-                                movie.overview }}</p>
+                            
+                            <!-- Genre tags -->
+                            <div class="mb-2">
+                                {% for genre in movie.genres|slice:":3" %}
+                                <span class="badge bg-secondary genre-badge">{{ genre }}</span>
+                                {% endfor %}
+                            </div>
+                            
+                            <p class="card-text" style="max-height: 100px; overflow-y:scroll;font-size: 1rem;">
+                                {{ movie.overview }}
+                            </p>
                             <p class="read_more"
                                 style="font-weight: bold;font-size:1rem;color:blue;font-style: italic; cursor:pointer">
                                 read more</p>
-                            <p class="text-muted">Rating: {{ movie.vote_average }}/10</p>
-                            <button type="button" class="btn btn-outline-success btn-sm"
-                                data-id="{{movie.id}}">Watch</button>
+                                
+                            <!-- Rating with stars -->
+                            <div class="mb-2 rating-stars">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= movie.vote_average|floatformat:"0"|divisibleby:"2" %}
+                                        ★
+                                    {% else %}
+                                        ☆
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="text-muted ms-2">{{ movie.vote_average }}/10</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-success btn-sm watch-btn"
+                                    data-id="{{movie.id}}">Watch</button>
+                                <button type="button" class="btn btn-outline-warning btn-sm add-watchlist-btn"
+                                    data-id="{{movie.id}}">+ Watchlist</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -96,11 +165,186 @@
         <footer class="bg-dark text-light text-center py-3">
             <p>&copy; 2024 Movie Recommendations. All rights reserved.</p>
         </footer>
-        <!-- Bootstrap JS -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
-        <script type="module" src="{% static 'script.js' %}" defer></script>
-        <script src="{% static 'js.cookie.js' %}" defer></script>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js.cookie.js' %}" defer></script>
+    <script type="module">
+        $(document).ready(function() {
+            var csrftoken = Cookies.get('csrftoken');
+            var movieContainer = $('.row.justify-content-center');
+            
+            // Handle "read more" toggle
+            $(document).on('click', '.read_more', function() {
+                let cardText = $(this).prev('.card-text');
+                if (cardText.css('max-height') === '100px') {
+                    cardText.css('max-height', 'none');
+                    $(this).text('read less');
+                } else {
+                    cardText.css('max-height', '100px');
+                    $(this).text('read more');
+                }
+            });
+            
+            // Search functionality
+            $('#floatingInputGroup2').on('input', function() {
+                let searchTerm = $(this).val().trim();
+                
+                if (searchTerm === '') {
+                    $(this).addClass('is-invalid');
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+                
+                searchMovies(searchTerm);
+            });
+            
+            // Mark movie as watched
+            $(document).on('click', '.watch-btn', function() {
+                let movieId = $(this).data('id');
+                let button = $(this);
+                
+                $.ajax({
+                    url: `/mark_watched/${movieId}/`,
+                    type: "POST",
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    },
+                    success: function() {
+                        button.prop('disabled', true).text("Watched").removeClass('btn-outline-success').addClass('btn-success');
+                        
+                        // Refresh recommendations
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1000);
+                    }
+                });
+            });
+            
+            // Genre filtering
+            $('#genre-filters .btn-outline-light').on('click', function() {
+                $(this).toggleClass('active');
+                filterByGenres();
+            });
+            
+            $('#clear-filters').on('click', function() {
+                $('#genre-filters .btn-outline-light').removeClass('active');
+                filterByGenres();
+            });
+            
+            // Function to filter movies by search term
+            function searchMovies(searchTerm) {
+                $.ajax({
+                    url: window.location.href,
+                    type: "GET",
+                    data: { search: searchTerm },
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(data) {
+                        updateMovieCards(data.movie_list);
+                    }
+                });
+            }
+            
+            // Function to filter by selected genres
+            function filterByGenres() {
+                let selectedGenres = [];
+                $('#genre-filters .btn-outline-light.active').each(function() {
+                    selectedGenres.push($(this).data('genre'));
+                });
+                
+                let searchTerm = $('#floatingInputGroup2').val().trim();
+                
+                $.ajax({
+                    url: window.location.href,
+                    type: "GET",
+                    data: { 
+                        search: searchTerm,
+                        genres: selectedGenres.join(',')
+                    },
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(data) {
+                        updateMovieCards(data.movie_list);
+                    }
+                });
+            }
+            
+            // Function to update movie cards
+            function updateMovieCards(movies) {
+                movieContainer.empty();
+                
+                if (movies.length === 0) {
+                    movieContainer.append(`
+                        <div class="col-12 text-center">
+                            <div class="alert alert-warning">
+                                <h4>No movies found</h4>
+                                <p>Try different search terms or filters</p>
+                            </div>
+                        </div>
+                    `);
+                    return;
+                }
+                
+                movies.forEach(movie => {
+                    // Extract genres (assuming they're stored as a string like "[Action, Adventure]")
+                    let genres = [];
+                    try {
+                        if (movie.genres) {
+                            genres = movie.genres.replace('[', '').replace(']', '').split(', ');
+                            genres = genres.map(g => g.replace(/'/g, ''));
+                        }
+                    } catch(e) {
+                        genres = [];
+                    }
+                    
+                    let genreHTML = '';
+                    genres.slice(0, 3).forEach(genre => {
+                        genreHTML += `<span class="badge bg-secondary genre-badge">${genre}</span>`;
+                    });
+                    
+                    // Create rating stars
+                    let ratingStars = '';
+                    const rating = Math.round(movie.vote_average / 2); // Convert to 5-star scale
+                    for (let i = 1; i <= 5; i++) {
+                        ratingStars += i <= rating ? '★' : '☆';
+                    }
+                    
+                    movieContainer.append(`
+                        <div id="${movie.id}" class="col-md-4 d-flex justify-content-center mb-4">
+                            <div class="card" style="width: 33vw; min-height: 400px;">
+                                <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" 
+                                     alt="${movie.original_title}" class="card-img-top">
+                                <div class="card-body">
+                                    <h5 class="card-title">${movie.original_title}</h5>
+                                    <div class="mb-2">${genreHTML}</div>
+                                    <p class="card-text" style="max-height: 100px; overflow-y: scroll;font-size: 1rem;">
+                                        ${movie.overview}
+                                    </p>
+                                    <p class="read_more" style="font-weight: bold;font-size:1rem;color:blue;font-style: italic; cursor:pointer">
+                                        read more
+                                    </p>
+                                    <div class="mb-2 rating-stars">
+                                        ${ratingStars}
+                                        <span class="text-muted ms-2">${movie.vote_average}/10</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-outline-success btn-sm watch-btn"
+                                            data-id="${movie.id}">Watch</button>
+                                        <button type="button" class="btn btn-outline-warning btn-sm add-watchlist-btn"
+                                            data-id="${movie.id}">+ Watchlist</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

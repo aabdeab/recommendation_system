@@ -1,10 +1,8 @@
 $(document).ready(function() {
-    var csrftoken = Cookies.get('csrftoken');
-    var movieContainer = $('.row.justify-content-center'); // Reference to movie container
+    var movieContainer = $('.row.justify-content-center'); 
     
-    // Function to update movie cards
     function updateMovieCards(movies) {
-        movieContainer.empty(); // Clear container before adding new movies
+        movieContainer.empty(); 
         movies.forEach(movie => {
             movieContainer.append(`
                 <div id="${movie.id}" class="col-md-4 d-flex justify-content-center mb-1">
@@ -29,7 +27,6 @@ $(document).ready(function() {
             `);
         });
         
-        // Attach event to "read more" links
         $(".read_more").off().on('click', function() {
             let cardText = $(this).prev('.card-text');
             if (cardText.css('max-height') === '100px') {
@@ -41,12 +38,10 @@ $(document).ready(function() {
             }
         });
         
-        // Attach event to "Watch" buttons
         $(".btn.btn-outline-success.btn-sm").off().on('click', function() {
             let movieId = $(this).data('id');
             let button = $(this);
             
-            // Mark movie as watched via AJAX
             $.ajax({
                 url: `/mark_watched/${movieId}/`,
                 type: "POST",
@@ -55,8 +50,6 @@ $(document).ready(function() {
                 },
                 success: function() {
                     button.attr('disabled', 'true').text("Watched");
-                    
-                    // Refresh recommendations after marking as watched
                     setTimeout(function() {
                         $.ajax({
                             url: window.location.href,
@@ -78,24 +71,20 @@ $(document).ready(function() {
         });
     }
     
-    // Handle search input
-    $('#floatingInputGroup2').on('input', function() {
-        let searchTerm = $(this).val().trim(); // Get the input value
+    $('#floatingInputGroup2').on('blur', function() {
+        let searchTerm = $(this).val().trim(); 
         
-        // Only search if there's input or if the field was cleared
         if (searchTerm || searchTerm === '') {
             $.ajax({
-                url: window.location.href,  // Current URL
+                url: window.location.href,  
                 type: "GET",
-                data: { search: searchTerm },  // Send search term
+                data: { search: searchTerm },  
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 dataType: "json",
                 success: function(context) {
-                    updateMovieCards(context.movie_list); // Update movies
-                    
-                    // Update validation feedback
+                    updateMovieCards(context.movie_list); 
                     if (searchTerm === '') {
                         $('#floatingInputGroup2').addClass('is-invalid');
                     } else {
